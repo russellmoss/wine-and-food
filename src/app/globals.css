@@ -1,0 +1,75 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Montserrat:wght@300;400;500;600&display=swap');
+@import "tailwindcss";
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 400;
+  background-color: #D8D1AE;
+  color: #715100;
+}
+
+h1, h2, h3 {
+  font-family: 'Playfair Display', serif;
+  font-weight: 700;
+}
+
+.form-container {
+  background-color: #EFE8D4;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.btn-primary {
+  background-color: #5A3E00;
+  color: white;
+  font-weight: 600;
+  padding: 14px 28px;
+  border-radius: 8px;
+  transition: background-color 0.3s ease;
+  cursor: pointer;
+  font-size: 16px;
+  font-family: 'Montserrat', sans-serif;
+}
+
+.btn-primary:hover {
+  background-color: #3D2900;
+}
+
+.btn-primary:disabled {
+  background-color: #B39E7E;
+  cursor: not-allowed;
+}
+
+input {
+  background-color: #F9F4E9;
+  border: 1px solid #715100;
+  color: #715100;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 400;
+}
+
+input::placeholder {
+  color: #B39E7E;
+  font-weight: 300;
+}
+
+input:focus {
+  outline: none;
+  border-color: #5A3E00;
+  box-shadow: 0 0 0 2px rgba(90, 62, 0, 0.1);
+}
+
+/* Mobile-specific styles */
+@media (max-width: 640px) {
+  input {
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+}
