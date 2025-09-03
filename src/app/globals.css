@@ -3,8 +3,11 @@
 
 * {
   box-sizing: border-box;
-  padding: 0;
+}
+
+body, h1, h2, h3, h4, h5, h6, p, ul, ol, li, blockquote, pre {
   margin: 0;
+  padding: 0;
 }
 
 html,
@@ -71,5 +74,57 @@ input:focus {
 @media (max-width: 640px) {
   input {
     font-size: 16px; /* Prevents zoom on iOS */
+  }
+  
+  /* Ensure touch targets are at least 44px */
+  button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Improve text readability on mobile */
+  h1 {
+    font-size: 1.75rem; /* 28px */
+    line-height: 1.2;
+  }
+  
+  h2 {
+    font-size: 1.25rem; /* 20px */
+    line-height: 1.3;
+  }
+  
+  /* Better spacing for mobile */
+  .form-container {
+    margin: 0 1rem;
+  }
+  
+  /* Prevent horizontal scroll */
+  body {
+    overflow-x: hidden;
+  }
+}
+
+/* Tablet styles */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .form-container {
+    max-width: 500px;
+    margin: 0 auto;
+  }
+}
+
+/* Large mobile devices */
+@media (max-width: 480px) {
+  h1 {
+    font-size: 1.5rem; /* 24px */
+  }
+  
+  h2 {
+    font-size: 1.125rem; /* 18px */
+  }
+  
+  /* Tighter spacing on very small screens */
+  .form-container {
+    padding: 1rem;
+    margin: 0 0.5rem;
   }
 }

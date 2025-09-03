@@ -157,109 +157,145 @@ async function createOrUpdateCustomerWithTag(customerData: {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { firstName, lastName, email, phone } = body;
+    const { testType = 'create', email, firstName, lastName, phone } = body;
 
     // Validate required fields
-    if (!firstName || !lastName || !email) {
+    if (!email) {
       return NextResponse.json(
-        { error: 'First name, last name, and email are required' },
+        { error: 'Email is required for testing' },
         { status: 400 }
       );
     }
 
-    // Debug: Log environment variables (without exposing sensitive data)
-    console.log('Commerce7 Environment check:', {
-      hasAppId: !!process.env.C7_APP_ID,
-      hasSecretKey: !!process.env.C7_SECRET_KEY,
-      hasTenantId: !!process.env.C7_TENANT_ID,
-      hasTagId: !!process.env.C7_TAG_ID,
-      tenantId: process.env.C7_TENANT_ID,
-    });
+    // Check environment variables
+    const envCheck = {
+      hasAppId: !!C7_APP_ID,
+      hasSecretKey: !!C7_SECRET_KEY,
+      hasTenantId: !!C7_TENANT_ID,
+      hasTagId: !!C7_TAG_ID,
+      tenantId: C7_TENANT_ID,
+      tagId: C7_TAG_ID
+    };
 
-    // Step 1: Create or update customer in Commerce7 with tag and email subscription
-    let customerId = null;
-    let customer = null;
-    
-    if (C7_APP_ID && C7_SECRET_KEY && C7_TENANT_ID && C7_TAG_ID) {
-      try {
-        const customerData = {
-          firstName,
-          lastName,
-          email,
-          phone,
-          metaData: {
-            source: 'wine-festival-contest',
-            contest_entry_date: new Date().toISOString(),
-            contest_prize: 'Two Free Tastings ($50 value)'
-          }
-        };
-        
-        customer = await createOrUpdateCustomerWithTag(customerData);
-        customerId = customer.id;
-        console.log('✅ Commerce7 customer processed successfully:', customerId);
-        
-      } catch (c7Error: any) {
-        console.log('🚨 Commerce7 integration failed:', c7Error.response?.status, c7Error.response?.data);
-        // Continue with Klaviyo even if Commerce7 fails
-        customerId = 'failed-to-create';
-      }
-    } else {
-      console.log('Skipping Commerce7 integration due to missing credentials or tag ID');
-      customerId = 'skipped-no-credentials';
+    console.log('Environment check:', envCheck);
+
+    if (!C7_APP_ID || !C7_SECRET_KEY || !C7_TENANT_ID || !C7_TAG_ID) {
+      return NextResponse.json(
+        { 
+          error: 'Missing Commerce7 environment variables',
+          envCheck
+        },
+        { status: 500 }
+      );
     }
 
-    // Commerce7 integration complete - no Klaviyo needed
+    const testResults = [];
+
+    // Test 1: Check if customer exists
+    try {
+      const existingCustomer = await fetchCustomerByEmail(email);
+      testResults.push({
+        test: 'fetch_customer',
+        success: true,
+        result: existingCustomer ? 'Customer exists' : 'Customer does not exist',
+        customerId: existingCustomer?.id
+      });
+    } catch (error: any) {
+      testResults.push({
+        test: 'fetch_customer',
+        success: false,
+        error: error.response?.data || error.message
+      });
+    }
+
+    // Test 2: Create or update customer with tag
+    try {
+      const customerData = {
+        firstName: firstName || 'Test',
+        lastName: lastName || 'User',
+        email,
+        phone: phone || '5551234567',
+        metaData: {
+          source: 'comprehensive-test',
+          test_type: testType,
+          test_date: new Date().toISOString()
+        }
+      };
+
+      const customer = await createOrUpdateCustomerWithTag(customerData);
+      
+      testResults.push({
+        test: 'create_or_update_customer',
+        success: true,
+        result: 'Customer processed successfully',
+        customerId: customer.id,
+        customer: customer
+      });
+
+      // Test 3: Verify customer was created/updated correctly
+      try {
+        const verifyCustomer = await fetchCustomerByEmail(email);
+        const hasTag = verifyCustomer?.tags?.some((tag: any) => tag.id === C7_TAG_ID);
+        const isSubscribed = verifyCustomer?.emailMarketingStatus === 'Subscribed';
+        
+        testResults.push({
+          test: 'verify_customer',
+          success: true,
+          result: 'Customer verification successful',
+          hasTag,
+          isSubscribed,
+          emailMarketingStatus: verifyCustomer?.emailMarketingStatus,
+          tags: verifyCustomer?.tags
+        });
+      } catch (error: any) {
+        testResults.push({
+          test: 'verify_customer',
+          success: false,
+          error: error.response?.data || error.message
+        });
+      }
+
+    } catch (error: any) {
+      testResults.push({
+        test: 'create_or_update_customer',
+        success: false,
+        error: error.response?.data || error.message
+      });
+    }
 
     return NextResponse.json({
       success: true,
-      message: "You're entered to win!",
-      customerId,
-      integration: {
-        commerce7: {
-          success: customerId && customerId !== 'skipped-no-credentials' && customerId !== 'failed-to-create',
-          customerId: customerId,
-          tagAttached: customerId && customerId !== 'skipped-no-credentials' && customerId !== 'failed-to-create',
-          emailSubscribed: customerId && customerId !== 'skipped-no-credentials' && customerId !== 'failed-to-create'
-        }
+      message: 'Comprehensive Commerce7 test completed',
+      envCheck,
+      testResults,
+      summary: {
+        totalTests: testResults.length,
+        passedTests: testResults.filter(t => t.success).length,
+        failedTests: testResults.filter(t => !t.success).length
       }
     });
 
   } catch (error: any) {
-    // Format Commerce7 errors like the working system
-    const formatCommerce7Errors = (error: any) => {
-      if (!error.response?.data?.errors) {
-        return error.message;
-      }
-
-      const errors = error.response.data.errors;
-      const errorMessages = errors.map((err: any) => {
-        const field = err.field || 'unknown field';
-        const message = err.message || 'Invalid value';
-        return `${field}: ${message}`;
-      });
-
-      return `Commerce7 Validation Errors:\n${errorMessages.join('\n')}`;
-    };
-
-    console.error('Contest entry error:', {
-      message: error.message,
-      status: error.response?.status,
-      statusText: error.response?.statusText,
-      data: error.response?.data,
-      headers: error.response?.headers,
-      config: {
-        url: error.config?.url,
-        method: error.config?.method,
-        headers: error.config?.headers,
-      }
-    });
+    console.error('🚨 Comprehensive test error:', error);
     
     return NextResponse.json(
       { 
-        error: 'Failed to process entry. Please try again.',
-        details: error.response?.data?.message || formatCommerce7Errors(error) || error.message 
+        error: 'Comprehensive test failed',
+        details: error.message
       },
       { status: 500 }
     );
   }
+}
+
+export async function GET() {
+  return NextResponse.json({
+    message: 'Commerce7 Comprehensive Test Endpoint',
+    usage: 'POST with { "email": "test@example.com", "testType": "create", "firstName": "Test", "lastName": "User", "phone": "5551234567" }',
+    tests: [
+      'fetch_customer - Check if customer exists by email',
+      'create_or_update_customer - Create or update customer with tag and email subscription',
+      'verify_customer - Verify customer was processed correctly'
+    ]
+  });
 }

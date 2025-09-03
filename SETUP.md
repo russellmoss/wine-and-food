@@ -10,25 +10,22 @@ C7_APP_ID=your_commerce7_app_id_here
 C7_SECRET_KEY=your_commerce7_secret_key_here
 C7_TENANT_ID=milea-estate-vineyard
 C7_TAG_ID=your_tag_id_here
-
-# Klaviyo Configuration
-KLAVIYO_API_KEY=your_klaviyo_api_key_here
-KLAVIYO_LIST_ID=your_klaviyo_list_id_here
 ```
 
 ## Issues Fixed
 
 1. **Commerce7 Authentication**: Added conditional checks to skip Commerce7 integration if credentials are missing or invalid
-2. **Klaviyo SMS Validation**: Fixed phone number validation to only include valid phone numbers (10+ digits)
-3. **Error Handling**: Improved error handling so the contest form works even if external APIs fail
-4. **Graceful Degradation**: The form will still work and show success even if some integrations fail
+2. **Commerce7 Validation**: Fixed validation errors for country code and metadata keys
+3. **Error Handling**: Improved error handling for Commerce7 API calls
+4. **Simplified Integration**: Removed Klaviyo integration - now Commerce7 only
 
 ## How It Works Now
 
-- If Commerce7 credentials are missing/invalid: Skips Commerce7 integration, continues with Klaviyo
-- If Klaviyo credentials are missing/invalid: Skips Klaviyo integration, still shows success
-- If phone number is invalid: Omits phone from Klaviyo profile to avoid SMS validation errors
-- Form always shows success message to user regardless of backend integration status
+- **Commerce7 Only**: The form now only integrates with Commerce7 for customer management
+- **Customer Creation/Update**: Creates new customers or updates existing ones with contest tag
+- **Tag Attachment**: Always ensures the contest tag is attached to customer profiles
+- **Email Subscription**: Automatically sets email marketing status to "Subscribed"
+- **Form Success**: Shows success message when Commerce7 integration completes
 
 ## Testing
 
@@ -58,8 +55,9 @@ Make sure your `.env.local` file has the exact credentials from Commerce7:
 
 ```env
 C7_APP_ID=Festival_app
-C7_SECRET_KEY=b95886e17a6a1ed0d02ed2e601d63b63b95508ac0e6f14930e4ace8f5722la70
+C7_SECRET_KEY=your_secret_key_here
 C7_TENANT_ID=milea-estate-vineyard
+C7_TAG_ID=bcef778b-9410-4c9d-9084-0bae9f46a89b
 ```
 
 ### 4. Verify in Commerce7 Admin
@@ -74,3 +72,31 @@ C7_TENANT_ID=milea-estate-vineyard
 - **Klaviyo Array Format**: Fixed the API call to send data as an array instead of single object
 - **Better Error Logging**: Added detailed logging for debugging Commerce7 authentication issues
 - **Test Endpoints**: Created `/api/test-c7` and `/api/contest-simple` for debugging
+- **Commerce7 CRUD Operations**: Implemented comprehensive customer create/update with tag attachment and email subscription
+- **Unified Commerce7 Function**: Created `createOrUpdateCustomerWithTag()` function for consistent customer management
+
+## New Commerce7 Integration Features
+
+### ✅ **Comprehensive Customer Management**
+- **Create or Update**: Automatically detects existing customers and updates them
+- **Tag Attachment**: Always ensures the contest tag (`C7_TAG_ID`) is attached to customer profiles
+- **Email Subscription**: Automatically sets `emailMarketingStatus` to "Subscribed"
+- **Phone Number Formatting**: Properly formats phone numbers with +1 prefix
+- **Metadata Tracking**: Tracks contest entry source and date
+
+### ✅ **Enhanced API Endpoints**
+- **`/api/contest`**: Contest form with Commerce7 customer creation/update
+- **`/api/contest-simple`**: Commerce7-only customer creation/update
+- **`/api/test-c7-complete`**: Comprehensive testing endpoint for all Commerce7 operations
+
+### ✅ **Robust Error Handling**
+- **Detailed Logging**: Comprehensive error logging for debugging
+- **Environment Validation**: Checks for all required Commerce7 environment variables
+- **Response Metadata**: Returns detailed Commerce7 integration status information
+- **Error Recovery**: Graceful handling of Commerce7 API failures
+
+### ✅ **Commerce7 Validation Fixes**
+- **Country Code**: Added `countryCode: 'US'` to all customer creation/update operations
+- **Metadata Validation**: Filters out invalid metadata keys (contest_entry_date, contest_prize)
+- **Phone Number Support**: Properly handles phone numbers with country code requirement
+- **Tag Attachment**: Ensures contest tag is always attached to customer profiles

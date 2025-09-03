@@ -1,4 +1,4 @@
-import ContestForm from './components/ContestForm';
+import ContestFlow from './components/ContestFlow';
 
 export const metadata = {
   title: '2025 HV Food & Wine Fest Giveaway - Milea Estate Vineyard',
@@ -9,5 +9,5 @@ export const metadata = {
 };
 
 export default function Home() {
-  return <ContestForm />;
+  return <ContestFlow />;
 }
